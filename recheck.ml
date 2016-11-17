@@ -173,7 +173,6 @@ let flatten nfa =
   let rec flatten nfa offset =
     let (totalstates, subgraphs) = Array.fold_right begin fun subgraph (offset, subs) ->
       let subgraph = flatten subgraph offset in
-      Format.printf "subgraph %i..%i\n" offset (offset + subgraph.newstates);
       (offset + subgraph.newstates, subgraph::subs)
     end nfa.subgraphs (offset + nfa.newstates, []) in
 
