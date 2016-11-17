@@ -1,0 +1,42 @@
+// compile with dot -Tsvg nfa.dot -o nfa.svg
+digraph nfa0 {
+    rankdir="LR";
+    labeljust="l";
+    node [label=""];
+
+    subgraph cluster0 {
+      label = "(a+c)b";
+
+      subgraph cluster00 {
+        label = "b";
+        000 -> 001 [label="b"];
+      };
+
+      subgraph cluster01 {
+        label="a+c";
+
+        subgraph cluster010 {
+          label="a";
+
+          0100 -> 0101 [label="a"];
+        };
+
+        subgraph cluster011 {
+          label="c";
+
+          0110 -> 0111 [label="c"];
+        };
+
+        010 -> 0100 [label="ε"];
+        010 -> 0110 [label="ε"];
+        0101 -> 011 [label="ε"];
+        0111 -> 011 [label="ε"];
+      };
+
+      011 -> 000 [label="ε"];
+    }
+
+    001 [peripheries=2];
+    010 [label="start"];
+}
+

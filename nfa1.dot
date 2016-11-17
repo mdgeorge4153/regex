@@ -1,0 +1,136 @@
+digraph nfa {
+  rankdir="LR";
+  labeljust="l";
+  node [label=""];
+  
+  subgraph cluster {
+    label = "(abc+d)*+aa+ε";
+    
+    0;
+    1;
+    subgraph cluster0 {
+      label = "(abc+d)*";
+      
+      00;
+      subgraph cluster00 {
+        label = "abc+d";
+        
+        000;
+        001;
+        subgraph cluster000 {
+          label = "abc";
+          
+          subgraph cluster0000 {
+            label = "a";
+            
+            00000;
+            00001;
+            00000 -> 00001 [label="a"];
+            
+          };
+          
+          subgraph cluster0001 {
+            label = "bc";
+            
+            subgraph cluster00010 {
+              label = "b";
+              
+              000100;
+              000101;
+              000100 -> 000101 [label="b"];
+              
+            };
+            
+            subgraph cluster00011 {
+              label = "c";
+              
+              000110;
+              000111;
+              000110 -> 000111 [label="c"];
+              
+            };
+            
+            000101 -> 000110 [label="ε"];
+            
+          };
+          
+          00001 -> 000100 [label="ε"];
+          
+        };
+        
+        subgraph cluster001 {
+          label = "d";
+          
+          0010;
+          0011;
+          0010 -> 0011 [label="d"];
+          
+        };
+        
+        000 -> 00000 [label="ε"];
+        000 -> 0010 [label="ε"];
+        000111 -> 001 [label="ε"];
+        0011 -> 001 [label="ε"];
+        
+      };
+      
+      001 -> 00 [label="ε"];
+      00 -> 000 [label="ε"];
+      
+    };
+    
+    subgraph cluster1 {
+      label = "aa+ε";
+      
+      10;
+      11;
+      subgraph cluster10 {
+        label = "aa";
+        
+        subgraph cluster100 {
+          label = "a";
+          
+          1000;
+          1001;
+          1000 -> 1001 [label="a"];
+          
+        };
+        
+        subgraph cluster101 {
+          label = "a";
+          
+          1010;
+          1011;
+          1010 -> 1011 [label="a"];
+          
+        };
+        
+        1001 -> 1010 [label="ε"];
+        
+      };
+      
+      subgraph cluster11 {
+        label = "ε";
+        
+        110;
+        
+      };
+      
+      10 -> 1000 [label="ε"];
+      10 -> 110 [label="ε"];
+      1011 -> 11 [label="ε"];
+      110 -> 11 [label="ε"];
+      
+    };
+    
+    0 -> 00 [label="ε"];
+    0 -> 10 [label="ε"];
+    00 -> 1 [label="ε"];
+    11 -> 1 [label="ε"];
+    
+  };
+  
+  1 [peripheries=2];
+  0 [label="start"];
+  
+}
