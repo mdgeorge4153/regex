@@ -5,24 +5,24 @@ type t =
     | Concat of t * t | Alternate of t * t | Closure of t
 
 let to_string re =
-  (** returns string and precedence *)
+  (* returns string and precedence *)
   let rec helper re = match re with
     | EmptySet        -> "∅", 0
     | EmptyString     -> "ε", 0
     | Char c          -> Char.escaped c, 0
     | Closure re'     -> let (s,prec) = helper re' in
-			 (if prec > 1 then ("("^s^")") else s)
-			 ^"*"
-			 , 1
+                         (if prec > 1 then ("("^s^")") else s)
+                         ^"*"
+                         , 1
     | Concat (r1,r2)  -> let (s1,p1) = helper r1 in
-			 let (s2,p2) = helper r2 in
-			 (if p1 > 2 then "("^s1^")" else s1)
-			 ^
-			 (if p2 > 2 then "("^s2^")" else s2)
-			 , 2
-    | Alternate (r1,r2) -> let (s1,p1) = helper r1 in
-			 let (s2,p2) = helper r2 in
-			 s1^"+"^s2, 3
+                         let (s2,p2) = helper r2 in
+                         (if p1 > 2 then "("^s1^")" else s1)
+                         ^
+                         (if p2 > 2 then "("^s2^")" else s2)
+                         , 2
+    | Alternate (r1,r2) -> let (s1,_) = helper r1 in
+                         let (s2,_) = helper r2 in
+                         s1^"+"^s2, 3
   in fst (helper re)
 
 let rec alphabet = function
@@ -50,7 +50,7 @@ let rec parse_expr chars =
   parse_term chars >>= fun (term, rest) ->
   match rest with
     | '+'::tl -> parse_expr tl >>= fun (term', rest') ->
-		 return (Alternate (term, term'), rest')
+                 return (Alternate (term, term'), rest')
     | _       -> return (term, rest)
 
 and parse_term chars =
@@ -58,9 +58,9 @@ and parse_term chars =
   match rest with
     | []   -> return (factor, [])
     | ')'::_ | '+'::_ | '*'::_
-	   -> return (factor, rest)
+           -> return (factor, rest)
     | rest -> parse_term rest >>= fun (term, rest') ->
-	      return (Concat (factor, term), rest')
+              return (Concat (factor, term), rest')
 
 and parse_factor chars =
   parse_base chars >>= fun (base, rest) ->
@@ -71,10 +71,10 @@ and parse_factor chars =
 and parse_base chars =
   match chars with
     | '('::rest -> parse_expr rest >>= fun (expr, rest') ->
-		   begin match rest' with
-		     | ')'::rest'' -> return (expr, rest'')
-		     | _           -> fail
-		   end
+                   begin match rest' with
+                     | ')'::rest'' -> return (expr, rest'')
+                     | _           -> fail
+                   end
     | 'e'::rest -> return (EmptyString, rest)
     | 'E'::rest -> return (EmptySet, rest)
     | []  -> fail
@@ -92,6 +92,10 @@ let of_string s =
   parse_expr (explode s) >>= function
     | re,[] -> return re
     | _     -> fail
+
+let of_string_exn s =
+  match of_string s with
+    | Some r -> r | None -> failwith "could not parse regular expression"
 
 
 (*
