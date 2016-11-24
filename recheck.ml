@@ -1,3 +1,4 @@
+open Extlib
 
 (******************************************************************************)
 (** Regular exprs *************************************************************)
@@ -265,9 +266,44 @@ let rec nfa_of_re re = match re with
 
 
 (******************************************************************************)
+(** NFA to DFA conversion *****************************************************)
+(******************************************************************************)
+
+module NodeMap = Map.Make(BitSet)
+
+type dfa_node = BitSet.t (** keys are nfa node numbers *)
+type accum    = (char * dfa_node) list NodeMap.t
+
+let eps_close nfa node =
+  failwith "TODO"
+
+let delta nfa node c =
+  failwith "TODO"
+
+(**
+let dfa_of_nfa chars n =
+  let extract = function | NewNode i -> i | Subgraph _ -> failwith "unflattened nfa" in
+
+  let rec expand node acc =
+    if List.mem acc node then acc
+    else
+      let transitions = List.map begin fun c ->
+        failwith "TODO"
+      end chars in
+      List.fold_left begin fun acc (_,dst) ->
+        expand dst acc
+      end (node,transitions)::acc transitions
+  in
+  failwith "TODO"
+*)
+
+(******************************************************************************)
 (** Testing *******************************************************************)
 (******************************************************************************)
 
 let Some re = parse_re "ab+(e+d)*";;
 let nfa = nfa_of_re re;;
 
+(*
+** vim: ts=2 sw=2 et ai
+*)
