@@ -1,0 +1,10 @@
+OASISFormat: 0.4
+Name:        regex
+Version:     0.0
+Synopsis:    Fun with automata
+Authors:     Michael George <mdgeorge@cs.cornell.edu>
+License:     MIT
+Library re
+  Path:       .
+  BuildTools: ocamlbuild
+  Modules:    RE, NestedNFA
