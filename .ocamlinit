@@ -1,0 +1,8 @@
+#use "topfind";;
+#thread;;
+#require "ppx_jane,core.top"
+#directory "_build";;
+#load "RE.cmo";;
+#load "NFA.cmo";;
+
+open Core.Std
