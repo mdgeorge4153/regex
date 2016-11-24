@@ -1,6 +1,6 @@
 type t
 
-include NFA.S
+include Automata.NFA
   with type t     := t
 
 (** output an NFA in the dot format on the given formatter *)
@@ -11,7 +11,4 @@ val write_nfa : t -> string -> unit
 
 (** convert a reg. exp. to an nfa *)
 val of_re : RE.t -> t
-
-(** simplify the NFA *)
-val flatten : t -> t
 

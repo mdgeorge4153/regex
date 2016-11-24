@@ -1,4 +1,5 @@
 open Core.Std
+open Automata
 
 module State = struct
   module T = struct
@@ -16,7 +17,7 @@ type t = {
     name        : string;
     alphabet    : Char.Set.t;
     newstates   : int;
-    newtrans    : ((State.t * NFA.transition) * State.t) list;
+    newtrans    : ((State.t * transition) * State.t) list;
     subgraphs   : t list;
     final       : State.t;
     initial     : State.t;
@@ -61,8 +62,8 @@ let rec print_state f = function
   | SubState (i,q) -> Format.fprintf f "%i%a" i print_state q
 
 let print_trans f = function
-  | NFA.Char c  -> Format.fprintf f "%c" c
-  | NFA.Epsilon -> Format.fprintf f "ε"
+  | Char c  -> Format.fprintf f "%c" c
+  | Epsilon -> Format.fprintf f "ε"
 
 let print_nfa f nfa =
   let rec helper path nfa =
@@ -106,8 +107,6 @@ let write_nfa nfa filename =
 (******************************************************************************)
 
 let rec of_re re =
-  let open RE in
-
   let init  nfas i = SubState (i,(List.nth_exn nfas i).initial) in
   let final nfas i = SubState (i,(List.nth_exn nfas i).final)   in
 
@@ -117,7 +116,7 @@ let rec of_re re =
   end in
 
   match re with
-    | EmptySet     -> { name        = RE.to_string re
+    | RE.EmptySet     -> { name        = RE.to_string re
                       ; alphabet    = Char.Set.empty
                       ; newstates   = 2
                       ; subgraphs   = []
@@ -125,7 +124,7 @@ let rec of_re re =
                       ; initial     = NewState 0
                       ; final       = NewState 1
                       }
-    | EmptyString  -> { name        = RE.to_string re
+    | RE.EmptyString  -> { name        = RE.to_string re
                       ; alphabet    = Char.Set.empty
                       ; newstates   = 1
                       ; subgraphs   = []
@@ -133,50 +132,47 @@ let rec of_re re =
                       ; initial     = NewState 0
                       ; final       = NewState 0
                       }
-    | Char c       -> { name        = RE.to_string re
+    | RE.Char c       -> { name        = RE.to_string re
                       ; alphabet    = Char.Set.singleton c
                       ; newstates   = 2
                       ; subgraphs   = []
-                      ; newtrans    = [(NewState 0, NFA.Char c), NewState 1]
+                      ; newtrans    = [(NewState 0, Char c), NewState 1]
                       ; initial     = NewState 0
                       ; final       = NewState 1
                       }
-    | Concat (r0,r1) -> let nfas = List.map ~f:of_re [r0;r1] in
+    | RE.Concat (r0,r1) -> let nfas = List.map ~f:of_re [r0;r1] in
                       { name        = RE.to_string re
                       ; alphabet    = alpha nfas
                       ; newstates   = 0
                       ; subgraphs   = nfas
-                      ; newtrans    = [(final nfas 0, NFA.Epsilon), init nfas 1]
+                      ; newtrans    = [(final nfas 0, Epsilon), init nfas 1]
                       ; initial     = init  nfas 0
                       ; final       = final nfas 1
                       }
-    | Alternate (r0,r1) -> let nfas = List.map ~f:of_re [r0;r1] in
+    | RE.Alternate (r0,r1) -> let nfas = List.map ~f:of_re [r0;r1] in
                       { name        = RE.to_string re
                       ; alphabet    = alpha nfas
                       ; newstates   = 2
                       ; subgraphs   = nfas
-                      ; newtrans    = [(NewState 0, NFA.Epsilon), init nfas 0
-                                      ;(NewState 0, NFA.Epsilon), init nfas 1
-                                      ;(final nfas 0, NFA.Epsilon), NewState 1
-                                      ;(final nfas 1, NFA.Epsilon), NewState 1
+                      ; newtrans    = [(NewState 0, Epsilon), init nfas 0
+                                      ;(NewState 0, Epsilon), init nfas 1
+                                      ;(final nfas 0, Epsilon), NewState 1
+                                      ;(final nfas 1, Epsilon), NewState 1
                                       ]
                       ; initial     = NewState 0
                       ; final       = NewState 1
                       }
-    | Closure r    -> let nfas = [of_re r] in
+    | RE.Closure r    -> let nfas = [of_re r] in
                       { name        = RE.to_string re
                       ; alphabet    = alpha nfas
                       ; newstates   = 1
                       ; subgraphs   = nfas
-                      ; newtrans    = [(final nfas 0, NFA.Epsilon), NewState 0
-                                      ;(NewState  0, NFA.Epsilon), init nfas 0
+                      ; newtrans    = [(final nfas 0, Epsilon), NewState 0
+                                      ;(NewState  0, Epsilon), init nfas 0
                                       ]
                       ; initial     = NewState 0
                       ; final       = NewState 0
                       }
-
-let flatten nfa =
-  failwith "TODO"
 
 
 (*
