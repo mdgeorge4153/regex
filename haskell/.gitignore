@@ -1,0 +1,19 @@
+.cabal-sandbox
+cabal.sandbox.config
+dist
+
+On branch master
+Your branch is ahead of 'origin/master' by 5 commits.
+  (use "git push" to publish your local commits)
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+	new file:   LICENSE
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	.gitignore
+	cabal.sandbox.config
+	dist/
+
