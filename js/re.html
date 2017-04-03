@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta charset="utf-8"/>
+  <script data-main="src/main.js" src="lib/require.js"></script>
+  </head>
+
+<body>
+
+<div id="input">
+Enter reg. exp:
+<input id="regex"></input>
+<input type="button"
+       id="ε"
+       value="ε"
+       onclick="document.getElementById('regex').value += 'ε'"></input>
+<input type="button"
+       id="∅"
+       value="∅"
+       onclick="document.getElementById('regex').value += '∅'"></input>
+<input type="button"
+       id="process"
+       value="process"
+       disabled="true"></input>
+</div>
+
+<p>Pretty printed: <span id="pretty"></span></p>
+
+<div>Tree: <ul><li id="tree"/></ul></div>
+
+<div>Examples:
+<ul id="examples"></ul>
+</div>
+
+
+</body>
