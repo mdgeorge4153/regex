@@ -6,8 +6,8 @@ requirejs.config({
   },
 });
 
-require(['re', 'lib/domReady!'],
-function(RE,   doc) {
+require(['re', 'dfa', 'lib/domReady!'],
+function(RE,   DFA,   doc) {
 
 var process  = doc.getElementById('process');
 var regex    = doc.getElementById('regex');
