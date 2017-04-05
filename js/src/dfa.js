@@ -8,11 +8,11 @@ function(Buckets,      induct) {
 /**
  * A DFA is an object with the following fields:
  *
- * Q: a finite set (with methods contains and forEach)
- * Σ: a finite set (with methods contains and forEach)
+ * Q: a finite set (stored as an array)
+ * Σ: a finite set (stored as an array)
  * δ: Q x Σ → Q
  * q0 ∈ Q
- * F  ⊆ Q          (with methods contains and forEach)
+ * F  ⊆ Q          (stored as an array)
  */
 
 function make() {
@@ -24,8 +24,10 @@ function make() {
   };
 
   this.accepts = function accepts(x) {
-    return this.F.contains(this.δhat(this.q0, x));
+    return this.F.includes(this.δhat(this.q0, x));
   };
+
+  return this;
 }
 
 /** Examples ******************************************************************/
@@ -41,8 +43,8 @@ function make() {
  */
 
 var even0odd1 = make.apply({
-  Q: new Buckets.Set(['ee', 'eo', 'oe', 'oo']),
-  Σ: new Buckets.Set(['0', '1']),
+  Q: ['ee', 'eo', 'oe', 'oo'],
+  Σ: ['0', '1'],
   δ: function(q,a) {
        if (q == 'ee' && a == '0') return 'oe';
        if (q == 'ee' && a == '1') return 'eo';
@@ -53,13 +55,21 @@ var even0odd1 = make.apply({
        if (q == 'oo' && a == '0') return 'eo';
        if (q == 'oo' && a == '1') return 'oe';
        throw 'invalid state';
-     }
+     },
   q0: 'ee',
-  F: new Buckets.Set(['oe'])
+  F: ['oe'],
+});
+
+var allStrings = make.apply({
+  Q: ['q'],
+  Σ: ['a','b','c'],
+  δ: function(q,a) { return 'q'; },
+  q0: 'q',
+  F: ['q']
 });
 
 /** Exports *******************************************************************/
 
-return {make: make, even0odd1: even0odd1};
+return {make: make, even0odd1: even0odd1, allStrings: allStrings};
 
 });
