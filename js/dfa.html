@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta charset="utf-8"/>
+  <script data-main="src/dfa-main.js" src="lib/require.js"></script>
+  <style>
+    th.border { border-right: 3px solid black; }
+    table { border-collapse: collapse; border: 1px solid gray; }
+    input.state { width: 5em; }
+    input.x     { padding: 0px; text-align: center; }
+    thead { border-bottom: 3px solid black; }
+    input.char { width: 1em; }
+    th, td { border: 1px solid gray; }
+  </style>
+  </head>
+
+<body>
+
+<table id="dfa"/>
+
+<!--
+<thead>
+ <tr> <th>state</th>
+      <th><input class="char" name="a0" value="0"/><input type="button" class="x" name="xa0" value="x"/></th>
+      <th><input class="char" name="a1" value="1"/><input type="button" class="x" name="xa1" value="x"/></th>
+      <th><input type="button" name="addChar" value="add character"/></th>
+      </tr>
+ </thead>
+<tbody>
+ <tr> <th><input type="radio" name="start" value="q0" checked="true"/> <input type="checkbox" name="q0f"/> <input class="state" name="q0"   value="qee"/> <input class="x" name="xq0"  value="x" type="button"/></th>
+      <td><input class="state" name="q0a0" value="qoe"/></td>
+      <td><input class="state" name="q0a1" value="qeo"/></td>
+      </tr>
+
+ <tr> <th><input type="radio" name="start" value="q1"/> <input type="checkbox" name="q1f"/> <input class="state" name="q1"   value="qeo"/> <input class="x" name="xq1"  value="x" type="button"/></th>
+      <td><input class="state" name="q1a0" value="qoo"/></td>
+      <td><input class="state" name="q1a1" value="qee"/></td>
+      </tr>
+
+ <tr> <th><input type="radio" name="start" value="q2"/> <input type="checkbox" name="q2f"/> <input class="state" name="q2"   value="qoe"/> <input class="x" name="xq2"  value="x" type="button"/></th>
+      <td><input class="state" name="q2a0" value="qee"/></td>
+      <td><input class="state" name="q2a1" value="qoo"/></td>
+      </tr>
+
+ <tr> <th><input type="radio" name="start" value="q3"/> <input type="checkbox" name="q3f"/> <input class="state" name="q3"   value="qoo"/> <input class="x" name="xq3"  value="x" type="button"/></th>
+      <td><input class="state" name="q3a0" value="qeo"/></td>
+      <td><input class="state" name="q3a1" value="qoe"/></td>
+      </tr>
+
+ <tr> <th><input id="addState" type="button" value="add state"/></th> </tr>
+ </tbody>
+-->
+</table>
+
+</body>
