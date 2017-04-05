@@ -36,7 +36,5 @@ return function induct(s, f) {
     return f.xa(induct(s.slice(0,-1), f), s.charAt(-1));
 }
 
-return induct;
-
 });
 
