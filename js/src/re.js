@@ -38,16 +38,54 @@ function make() {
       throw 'invalid regular expression';
   }
 
-  this.lang = function lang() {
-    switch (this.type) {
-      case 'ε': return '{ε}';
-      case '∅': return '∅';
-      case 'a': return '{' + this.val + '}';
-      case '~': return '{xy | x ∈ ' + this.r1.lang() + ', y ∈ ' + this.r2.lang() + '}';
-      case '+': return this.r1.lang() + ' U ' + this.r2.lang();
-      case '*': return '{ x1x2...xn | xi ∈ ' + this.r.lang() + '}';
+  /** Structural induction ****************************************************/
+  function induct(visitor) {
+    switch(this.type) {
+      case 'ε': return visitor.ε;
+      case '∅': return visitor.∅;
+      case 'a': return visitor.str(this.val);
+      case '~': return visitor.cat(this.r1, this.r2);
+      case '+': return visitor.alt(this.r1, this.r2);
+      case '*': return visitor.star(this.r);
     }
   }
+
+  /** Language ****************************************************************/
+  this.lang = function lang() {
+    return this.induct({
+      ε:    function()      { return '{ε}'; },
+      ∅:    function()      { return '∅'; },
+      str:  function(val)   { return '{' + val + '}'; },
+      cat:  function(r1,r2) { return '{xy | x ∈ ' + r1.lang() + ', y ∈ ' + r2.lang() + '}'; },
+      alt:  function(r1,r2) { return r1.lang() + ' ∪ ' + r2.lang() },
+      star: function(r)     { return '{ x1x2...xn | xi ∈ ' + r.lang() + '}'; },
+    });
+  }
+
+  /** Simplification **********************************************************/
+  this.simplify = function simplify() {
+    return this.induct({
+      ε:    function ()   { return this; },
+      ∅:    function ()   { return this; },
+      star: function(r)   { return this; }
+      str:  function(val) { return this; },
+      cat:  function(r1,r2) {
+        r1 = r1.simplify(); r2 = r2.simplify();
+        if (r1.type == '∅' || r2.type == '∅')
+          return ∅();
+        if (r1.type == 'ε') return r2;
+        if (r2.type == 'ε') return r1;
+        return this;
+      },
+      alt: function(r1,r2) {
+        if (r1.type == '∅') return r2;
+        if (r2.type == '∅') return r1;
+      },
+    });
+  }
+
+
+  /** Example generation ******************************************************/
 
   function choose(e) {
     return e[Math.floor(Math.random()*e.length)];
@@ -55,12 +93,12 @@ function make() {
 
   /** return up to n examples from the language of this. */
   this.examples = function examples(n) {
-    switch (this.type) {
-      case 'ε': return [''];
-      case '∅': return [];
-      case 'a': return [this.val];
-      case '~':
-        var e1 = this.r1.examples(n); var e2 = this.r2.examples(n);
+    this.induct({
+      ε:   function()    { return ['']; },
+      ∅:   function()    { return []; },
+      str: function(val) { return [val]; },
+      cat: function(r1,r2) {
+        var e1 = r1.examples(n); var e2 = r2.examples(n);
         var result = Buckets.Set();
         if (e1.length * e2.length <= n)
           for (var i in e1)
@@ -70,8 +108,9 @@ function make() {
           for (var i = 0; i < n; i++)
             result.add(choose(e1) + choose(e2));
         return result.toArray();
-      case '+':
-        var e1 = this.r1.examples(n); var e2 = this.r2.examples(n);
+      },
+      alt: function(r1,r2) {
+        var e1 = r1.examples(n); var e2 = r2.examples(n);
         var result = Buckets.Set();
         if (e1.length + e2.length <= n) {
           for (var i in e1) result.add(e1[i]);
@@ -90,8 +129,9 @@ function make() {
           for (var i = n/2; i < n; i++) result.add(choose(e2));
         }
         return result.toArray();
-      case '*':
-        var e = this.r.examples(n);
+      },
+      star: function(r) {
+        var e = r.examples(n);
         var result = Buckets.Set();
         if (e.length == 0) return [''];
         for (var i = 0; i < n; i++) {
@@ -101,30 +141,36 @@ function make() {
           result.add(s);
         }
         return result.toArray();
+      }
     }
   }
 
-  this.parens = function parens(prec) {
-    switch(this.type) {
-      case 'ε': return 'ε';
-      case '∅': return '∅';
-      case 'a': switch(this.val) {
+  /** Pretty printing *********************************************************/
+
+  function parens(prec) {
+    return this.induct({
+      ε: function() { return 'ε'; },
+      ∅: function() { return '∅'; },
+      a: function(val) { switch(val) {
                   case 'ε': case '∅': case '*': case '+': case '(': case ')':
                             return '\\' + this.val;
                   default:  return this.val;
                 };
-      case '*': return prec < 1 ? '(' + this.r.parens(1) + '*)'
-                                : this.r.parens(1) + '*';
-      case '~': return prec < 2 ? '(' + this.r1.parens(2) + this.r2.parens(2) + ')'
-                                : this.r1.parens(2) + this.r2.parens(2);
-      case '+': return prec < 3 ? '(' + this.r1.parens(3) + '+' + this.r2.parens(3) + ')'
-                                : this.r1.parens(3) + '+' + this.r2.parens(3);
-      default:  throw 'invalid regular expression';
-    }
+         },
+      star: function(r) {
+        return prec < 1 ? '(' + r.parens(1) + '*)' : r.parens(1) + '*';
+      },
+      cat:  function(r1,r2) {
+        return prec < 2 ? '(' + r1.parens(2) + r2.parens(2) + ')' : r1.parens(2) + r2.parens(2);
+      },
+      alt:  function(r1,r2) {
+        return prec < 3 ? '(' + r1.parens(3) + '+' + r2.parens(3) + ')' : r1.parens(3) + '+' + r2.parens(3);
+      }
+    });
   }
 
   this.toString = function toString() {
-    return this.parens(5);
+    return parens(5);
   }
 
   this.appendTo = function appendTo(dom) {
@@ -157,6 +203,16 @@ function make() {
 
   return this;
 }
+
+/** Building REs **************************************************************/
+
+val ∅    = function ()      { return make.apply({type: '∅'}); };
+val ε    = function ()      { return make.apply({type: 'ε'}); };
+val a    = function (val)   { return make.apply({type: 'a', val: val}); };
+val cat  = function (r1,r2) { return make.apply({type: '~', r1: r1, r2: r2}); };
+val alt  = function (r1,r2) { return make.apply({type: '+', r1: r1, r2: r2}); };
+val star = function (r)     { return make.apply({type: '*', r: r}); };
+
 
 /** Parsing REs ***************************************************************/
 
@@ -257,7 +313,9 @@ function parse(str) {
   return make.apply(result);
 }
 
-return {make: make, parse: parse};
+return {parse: parse,
+        ∅: ∅, ε: ε, str:str, cat: cat, alt: alt, star: star
+};
 
 });
 
