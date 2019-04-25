@@ -1,6 +1,6 @@
 
-define(['lib/buckets'],
-function(Buckets) {
+define(['util'],
+function(util) {
 
 
 /******************************************************************************/
@@ -15,46 +15,43 @@ function(Buckets) {
  */
 
 function make() {
-  // check invariant
-  switch (this.type) {
-    case 'ε': case '∅':
-      break;
-
-    case 'a':
-      if (typeof this.val != 'string' || this.val.length != 1)
-        throw 'invalid regular expression';
-      break;
-
-    case '~': case '+':
-      make.apply(this.r1);
-      make.apply(this.r2);
-      break;
-
-    case '*':
-      make.apply(this.r);
-      break;
-
-    default:
-      throw 'invalid regular expression';
-  }
-
   /** Structural induction ****************************************************/
-  function induct(visitor) {
+  this.induct = function induct(visitor) {
     switch(this.type) {
-      case 'ε': return visitor.ε;
-      case '∅': return visitor.∅;
-      case 'a': return visitor.str(this.val);
-      case '~': return visitor.cat(this.r1, this.r2);
-      case '+': return visitor.alt(this.r1, this.r2);
-      case '*': return visitor.star(this.r);
+      case 'ε': return visitor.ε.call(this);
+      case '∅': return visitor.nil.call(this);
+      case 'a': return visitor.str.call(this, this.val);
+      case '~': return visitor.cat.call(this, this.r1, this.r2);
+      case '+': return visitor.alt.call(this, this.r1, this.r2);
+      case '*': return visitor.star.call(this, this.r);
+      default:  throw 'invalid regular expression'; 
     }
   }
+
+  // check invariant
+  this.induct({
+    ε:    function() {},
+    nil:  function() {},
+    str:  function(val) {
+      if (typeof val != 'string' || val.length != 1)
+        throw 'invalid regular expression';
+    },
+    cat:  function(r1,r2) {
+      make.apply(r1); make.apply(r2);
+    },
+    alt:  function(r1,r2) {
+      make.apply(r1); make.apply(r2);
+    },
+    star: function(r) {
+      make.apply(r);
+    }
+  });
 
   /** Language ****************************************************************/
   this.lang = function lang() {
     return this.induct({
       ε:    function()      { return '{ε}'; },
-      ∅:    function()      { return '∅'; },
+      nil:  function()      { return '∅'; },
       str:  function(val)   { return '{' + val + '}'; },
       cat:  function(r1,r2) { return '{xy | x ∈ ' + r1.lang() + ', y ∈ ' + r2.lang() + '}'; },
       alt:  function(r1,r2) { return r1.lang() + ' ∪ ' + r2.lang() },
@@ -66,20 +63,27 @@ function make() {
   this.simplify = function simplify() {
     return this.induct({
       ε:    function ()   { return this; },
-      ∅:    function ()   { return this; },
-      star: function(r)   { return this; }
+      nil:  function ()   { return this; },
       str:  function(val) { return this; },
+      star: function(r)   {
+        r = r.simplify();
+        if (r.type == '∅') return ε();
+        if (r.type == 'ε') return r;
+        return star(r);
+      },
       cat:  function(r1,r2) {
         r1 = r1.simplify(); r2 = r2.simplify();
         if (r1.type == '∅' || r2.type == '∅')
-          return ∅();
+          return nil();
         if (r1.type == 'ε') return r2;
         if (r2.type == 'ε') return r1;
-        return this;
+        return cat(r1,r2);
       },
       alt: function(r1,r2) {
+        r1 = r1.simplify(); r2 = r2.simplify();
         if (r1.type == '∅') return r2;
         if (r2.type == '∅') return r1;
+        return alt(r1,r2);
       },
     });
   }
@@ -87,74 +91,70 @@ function make() {
 
   /** Example generation ******************************************************/
 
-  function choose(e) {
-    return e[Math.floor(Math.random()*e.length)];
-  }
-
   /** return up to n examples from the language of this. */
   this.examples = function examples(n) {
-    this.induct({
-      ε:   function()    { return ['']; },
-      ∅:   function()    { return []; },
-      str: function(val) { return [val]; },
+    return this.induct({
+      ε:   function()    { return new Set(['']); },
+      nil: function()    { return new Set([]); },
+      str: function(val) { return new Set([val]); },
       cat: function(r1,r2) {
         var e1 = r1.examples(n); var e2 = r2.examples(n);
-        var result = Buckets.Set();
+        var result = new Set();
         if (e1.length * e2.length <= n)
           for (var i in e1)
             for (var j in e2)
               result.add(e1[i] + e2[j]);
         else
           for (var i = 0; i < n; i++)
-            result.add(choose(e1) + choose(e2));
-        return result.toArray();
+            result.add(util.choose(e1) + util.choose(e2));
+        return result;
       },
       alt: function(r1,r2) {
         var e1 = r1.examples(n); var e2 = r2.examples(n);
-        var result = Buckets.Set();
+        var result = new Set();
         if (e1.length + e2.length <= n) {
           for (var i in e1) result.add(e1[i]);
           for (var i in e2) result.add(e2[i]);
         }
         else if (e1.length <= n/2) {
           for (var i in e1) result.add(e1[i]);
-          for (var i = e1.length; i < n; i++) result.add(choose(e2));
+          for (var i = e1.length; i < n; i++) result.add(util.choose(e2));
         }
         else if (e2.length <= n/2) {
           for (var i in e2) result.add(e2[i]);
-          for (var i = e2.length; i < n; i++) result.add(choose(e1));
+          for (var i = e2.length; i < n; i++) result.add(util.choose(e1));
         }
         else {
-          for (var i = 0; i < n/2; i++) result.add(choose(e1));
-          for (var i = n/2; i < n; i++) result.add(choose(e2));
+          for (var i = 0; i < n/2; i++) result.add(util.choose(e1));
+          for (var i = n/2; i < n; i++) result.add(util.choose(e2));
         }
-        return result.toArray();
+        return result;
       },
       star: function(r) {
         var e = r.examples(n);
-        var result = Buckets.Set();
+        var result = new Set();
         if (e.length == 0) return [''];
         for (var i = 0; i < n; i++) {
           var s = '';
           for (var j = 0; j < i; j++)
-            s += choose(e);
+            s += util.choose(e);
           result.add(s);
         }
-        return result.toArray();
+        return result;
       }
-    }
+    });
   }
 
   /** Pretty printing *********************************************************/
 
-  function parens(prec) {
+  this.parens = function parens(prec) {
     return this.induct({
-      ε: function() { return 'ε'; },
-      ∅: function() { return '∅'; },
-      a: function(val) { switch(val) {
+      ε:   function() { return 'ε'; },
+      nil: function() { return '∅'; },
+      str: function(val) { switch(val) {
                   case 'ε': case '∅': case '*': case '+': case '(': case ')':
-                            return '\\' + this.val;
-                  default:  return this.val;
+                            return '\\' + val;
+                  default:  return '' + val;
                 };
          },
       star: function(r) {
@@ -170,35 +170,29 @@ function make() {
   }
 
   this.toString = function toString() {
-    return parens(5);
+    return this.parens(5);
   }
 
   this.appendTo = function appendTo(dom) {
-    switch (this.type) {
-      case 'ε':
-      case '∅': dom.appendChild(document.createTextNode(this.type));
-                return;
-      case 'a': dom.appendChild(document.createTextNode(this.val));
-                return;
-      case '+':
-      case '~': dom.appendChild(document.createTextNode(this.type));
-                var ul = document.createElement('ul');
-                var li = document.createElement('li');
-                this.r1.appendTo(li);
-                ul.appendChild(li);
-                li = document.createElement('li');
-                this.r2.appendTo(li);
-                ul.appendChild(li);
-                dom.appendChild(ul);
-                return;
-      case '*': dom.appendChild(document.createTextNode('*'));
-                var ul = document.createElement('ul');
-                var li = document.createElement('li');
-                this.r.appendTo(li);
-                ul.appendChild(li);
-                dom.appendChild(ul);
-                return;
+    function text(str) { dom.appendChild(document.createTextNode(str)); }
+    function list(vals) {
+      var ul = document.createElement('ul');
+      for (var i in vals) {
+        var li = document.createElement('li');
+        vals[i].appendTo(li);
+        ul.appendChild(li);
+      }
+      dom.appendChild(ul);
     }
+
+    return this.induct({
+      ε:    function()      { text('ε'); },
+      nil:  function()      { text('∅'); },
+      str:  function(val)   { text(val); },
+      alt:  function(r1,r2) { text('alternation');   list([r1,r2]); },
+      cat:  function(r1,r2) { text('concatenation'); list([r1,r2]); },
+      star: function(r)     { text('closure');       list([r]); }
+    });
   }
 
   return this;
@@ -206,12 +200,12 @@ function make() {
 
 /** Building REs **************************************************************/
 
-val ∅    = function ()      { return make.apply({type: '∅'}); };
-val ε    = function ()      { return make.apply({type: 'ε'}); };
-val a    = function (val)   { return make.apply({type: 'a', val: val}); };
-val cat  = function (r1,r2) { return make.apply({type: '~', r1: r1, r2: r2}); };
-val alt  = function (r1,r2) { return make.apply({type: '+', r1: r1, r2: r2}); };
-val star = function (r)     { return make.apply({type: '*', r: r}); };
+function ε    ()      { return make.apply({type: 'ε'}); };
+function nil  ()      { return make.apply({type: '∅'}); };
+function str  (val)   { return make.apply({type: 'a', val: val}); };
+function cat  (r1,r2) { return make.apply({type: '~', r1: r1, r2: r2}); };
+function alt  (r1,r2) { return make.apply({type: '+', r1: r1, r2: r2}); };
+function star (r)     { return make.apply({type: '*', r: r}); };
 
 
 /** Parsing REs ***************************************************************/
@@ -314,7 +308,7 @@ function parse(str) {
 }
 
 return {parse: parse,
-        ∅: ∅, ε: ε, str:str, cat: cat, alt: alt, star: star
+        nil: nil, ε: ε, str:str, cat: cat, alt: alt, star: star
 };
 
 });

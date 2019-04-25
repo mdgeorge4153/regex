@@ -6,17 +6,26 @@ requirejs.config({
   },
 });
 
-require(['re', 'dfa', 'lib/domReady!'],
-function(RE,   DFA,   doc) {
+require(['re', 'dfa', 'gnfa', 'nfa', 'lib/domReady!'],
+function( RE,   DFA,   GNFA,   NFA,   doc) {
 
 var process  = doc.getElementById('process');
 var regex    = doc.getElementById('regex');
 var tree     = doc.getElementById('tree');
 var pretty   = doc.getElementById('pretty');
+var simple   = doc.getElementById('simple');
 var examples = doc.getElementById('examples');
 
 var emptySet = doc.getElementById('∅');
 var emptyStr = doc.getElementById('ε');
+
+var nfa = NFA.example;
+var gnfa = GNFA.ofNFA(nfa);
+while (gnfa.Q.size > 2)
+  gnfa = gnfa.simplify();
+
+console.log(gnfa.simplify().toString());
+regex.innerHTML = gnfa.simplify().toString();
 
 function insert(input, str) {
   input.focus();
@@ -35,6 +44,7 @@ process.onclick = function() {
   try {
     var re = RE.parse(regex.value);
     pretty.innerHTML = re.toString();
+    simple.innerHTML = re.simplify().toString();
 
     while (tree.hasChildNodes())
       tree.removeChild(tree.firstChild);
@@ -44,10 +54,10 @@ process.onclick = function() {
     while (examples.hasChildNodes())
       examples.removeChild(examples.firstChild);
     var e = re.examples(10);
-    e.sort();
-    for (var i in e) {
+    // e.sort();
+    for (var i of e) {
       var li = doc.createElement('li');
-      li.appendChild(doc.createTextNode('"' + e[i] + '"'));
+      li.appendChild(doc.createTextNode('"' + i + '"'));
       examples.appendChild(li);
     }
   }
