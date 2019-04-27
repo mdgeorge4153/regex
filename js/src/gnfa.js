@@ -85,17 +85,6 @@ function make() {
     }
   }
 
-
-  this.log = function log() {
-    console.log(this.Q);
-    for (var q1 of this.Q)
-      for (var q2 of this.Q) {
-        r = this.δ(q1,q2);
-        if (this.δ(q1,q2).type != '∅')
-          console.log(q1 + " -- " + r + " --> " + q2);
-      }
-  }
-
   return this;
 
 }
