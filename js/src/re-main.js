@@ -1,37 +1,30 @@
+import RE from './re.js';
 
-requirejs.config({
-  baseUrl: "src",
-  paths: {
-    "lib":  "../lib",
-  },
-});
+let doc = document;
 
-require(['re', 'dfa', 'gnfa', 'nfa', 'lib/domReady!'],
-function( RE,   DFA,   GNFA,   NFA,   doc) {
+let process  = doc.getElementById('process');
+let regex    = doc.getElementById('regex');
+let tree     = doc.getElementById('tree');
+let pretty   = doc.getElementById('pretty');
+let simple   = doc.getElementById('simple');
+let examples = doc.getElementById('examples');
 
-var process  = doc.getElementById('process');
-var regex    = doc.getElementById('regex');
-var tree     = doc.getElementById('tree');
-var pretty   = doc.getElementById('pretty');
-var simple   = doc.getElementById('simple');
-var examples = doc.getElementById('examples');
+let emptySet = doc.getElementById('∅');
+let emptyStr = doc.getElementById('ε');
 
-var emptySet = doc.getElementById('∅');
-var emptyStr = doc.getElementById('ε');
+//let nfa = NFA.example;
+//let gnfa = GNFA.ofNFA(nfa);
+//while (gnfa.Q.size > 2)
+//  gnfa = gnfa.simplify();
 
-var nfa = NFA.example;
-var gnfa = GNFA.ofNFA(nfa);
-while (gnfa.Q.size > 2)
-  gnfa = gnfa.simplify();
-
-console.log(gnfa.simplify().toString());
-regex.innerHTML = gnfa.simplify().toString();
+//console.log(gnfa.simplify().toString());
+//regex.innerHTML = gnfa.simplify().toString();
 
 function insert(input, str) {
   input.focus();
-  var n = input.selectionStart;
-  var front = input.value.slice(0,input.selectionStart);
-  var back  = input.value.slice(input.selectionEnd);
+  let n = input.selectionStart;
+  let front = input.value.slice(0,input.selectionStart);
+  let back  = input.value.slice(input.selectionEnd);
   input.value = front + str + back;
   input.selectionStart = n+1;
   input.selectionEnd   = n+1;
@@ -42,7 +35,7 @@ emptyStr.onclick = function() { insert(regex, 'ε'); };
 
 process.onclick = function() {
   try {
-    var re = RE.parse(regex.value);
+    let re = RE.parse(regex.value);
     pretty.innerHTML = re.toString();
     simple.innerHTML = re.simplify().toString();
 
@@ -53,10 +46,10 @@ process.onclick = function() {
 
     while (examples.hasChildNodes())
       examples.removeChild(examples.firstChild);
-    var e = re.examples(10);
+    let e = re.examples(10);
     // e.sort();
-    for (var i of e) {
-      var li = doc.createElement('li');
+    for (let i of e) {
+      let li = doc.createElement('li');
       li.appendChild(doc.createTextNode('"' + i + '"'));
       examples.appendChild(li);
     }
@@ -68,4 +61,3 @@ process.onclick = function() {
 
 process.disabled = false;
 
-});

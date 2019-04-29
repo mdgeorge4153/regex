@@ -1,143 +1,135 @@
+import Util from './util.js';
 
-define(['util'],
-function(util) {
+export default class RE {
+  /** Induction ***************************************************************/
 
+  induct(visitor)  { throw 'not implemented; abstract base class.'; }
+  constructor()    { }
 
-/******************************************************************************/
-/** RE ************************************************************************/
-/******************************************************************************/
+  static ε    ()      { return new ε(); }
+  static nil  ()      { return new Nil(); }
+  static str  (val)   { return new Str(val); }
+  static cat  (r1,r2) { return new Cat(r1,r2); }
+  static alt  (r1,r2) { return new Alt(r1,r2); }
+  static star (r)     { return new Star(r); }
 
-/** an RE r is an object with a 'type' field, which is either:
- *   - 'ε' or '∅'
- *   - 'a', in which case r.val ∈ Σ
- *   - '~' or '+', in which case r.r1 and r.r1 are regular expressions
- *   - '*', in which case r.r is a regular expression
- */
+  /** Printing ****************************************************************/
 
-function make() {
-  /** Structural induction ****************************************************/
-  this.induct = function induct(visitor) {
-    switch(this.type) {
-      case 'ε': return visitor.ε.call(this);
-      case '∅': return visitor.nil.call(this);
-      case 'a': return visitor.str.call(this, this.val);
-      case '~': return visitor.cat.call(this, this.r1, this.r2);
-      case '+': return visitor.alt.call(this, this.r1, this.r2);
-      case '*': return visitor.star.call(this, this.r);
-      default:  throw 'invalid regular expression'; 
-    }
+  toString() {
+    return parens(this,5);
   }
 
-  // check invariant
-  this.induct({
-    ε:    function() {},
-    nil:  function() {},
-    str:  function(val) {
-      if (typeof val != 'string' || val.length != 1)
-        throw 'invalid regular expression';
-    },
-    cat:  function(r1,r2) {
-      make.apply(r1); make.apply(r2);
-    },
-    alt:  function(r1,r2) {
-      make.apply(r1); make.apply(r2);
-    },
-    star: function(r) {
-      make.apply(r);
-    }
-  });
-
   /** Language ****************************************************************/
-  this.lang = function lang() {
+
+  lang() {
     return this.induct({
-      ε:    function()      { return '{ε}'; },
-      nil:  function()      { return '∅'; },
-      str:  function(val)   { return '{' + val + '}'; },
-      cat:  function(r1,r2) { return '{xy | x ∈ ' + r1.lang() + ', y ∈ ' + r2.lang() + '}'; },
-      alt:  function(r1,r2) { return r1.lang() + ' ∪ ' + r2.lang() },
-      star: function(r)     { return '{ x1x2...xn | xi ∈ ' + r.lang() + '}'; },
+      ε:    ()      => '{ε}',
+      nil:  ()      => '∅',
+      str:  (val)   => '{' + val + '}',
+      cat:  (r1,r2) => '{xy | x ∈ ' + r1.lang() + ', y ∈ ' + r2.lang() + '}',
+      alt:  (r1,r2) => r1.lang() + ' ∪ ' + r2.lang(),
+      star: (r)     => '{ x1x2...xn | xi ∈ ' + r.lang() + '}',
+    });
+  }
+
+  /** Helpers *****************************************************************/
+
+  isNil() {
+    return this.induct({
+      nil: () => true,
+      _:   () => false
+    });
+  }
+
+  isε() {
+    return this.induct({
+      ε: () => true,
+      _: () => false
     });
   }
 
   /** Simplification **********************************************************/
-  this.simplify = function simplify() {
-    return this.induct({
-      ε:    function ()   { return this; },
-      nil:  function ()   { return this; },
-      str:  function(val) { return this; },
-      star: function(r)   {
-        r = r.simplify();
-        if (r.type == '∅') return ε();
-        if (r.type == 'ε') return r;
-        return star(r);
-      },
-      cat:  function(r1,r2) {
-        r1 = r1.simplify(); r2 = r2.simplify();
-        if (r1.type == '∅' || r2.type == '∅')
-          return nil();
-        if (r1.type == 'ε') return r2;
-        if (r2.type == 'ε') return r1;
-        return cat(r1,r2);
-      },
-      alt: function(r1,r2) {
-        r1 = r1.simplify(); r2 = r2.simplify();
-        if (r1.type == '∅') return r2;
-        if (r2.type == '∅') return r1;
-        return alt(r1,r2);
-      },
-    });
-  }
 
+  simplify() {
+    return this.induct({
+      star(r) {
+        r = r.simplify();
+        return r.induct({
+          ε:   () => RE.ε(),
+          nil: () => RE.nil(),
+          _:   () => RE.star(r)
+        });
+      },
+      cat(r1,r2) {
+	r1 = r1.simplify(); r2 = r2.simplify();
+
+	if (r1.isNil() || r2.isNil())
+	  return RE.nil();
+	if (r1.isε()) return r2;
+	if (r2.isε()) return r1;
+	return RE.cat(r1,r2);
+      },
+      alt(r1,r2) {
+	r1 = r1.simplify(); r2 = r2.simplify();
+	if (r1 instanceof Nil) return r2;
+	if (r2 instanceof Nil) return r1;
+	return RE.alt(r1,r2);
+      },
+      _() {
+        return this;
+      }
+    },this);
+  }
 
   /** Example generation ******************************************************/
 
   /** return up to n examples from the language of this. */
-  this.examples = function examples(n) {
+  examples(n) {
     return this.induct({
-      ε:   function()    { return new Set(['']); },
-      nil: function()    { return new Set([]); },
-      str: function(val) { return new Set([val]); },
-      cat: function(r1,r2) {
-        var e1 = r1.examples(n); var e2 = r2.examples(n);
-        var result = new Set();
+      ε()        { return new Set(['']); },
+      nil()      { return new Set([]); },
+      str(val)   { return new Set([val]); },
+      cat(r1,r2) {
+        let e1 = r1.examples(n); let e2 = r2.examples(n);
+        let result = new Set();
         if (e1.length * e2.length <= n)
-          for (var i in e1)
-            for (var j in e2)
+          for (let i in e1)
+            for (let j in e2)
               result.add(e1[i] + e2[j]);
         else
-          for (var i = 0; i < n; i++)
-            result.add(util.choose(e1) + util.choose(e2));
+          for (let i = 0; i < n; i++)
+            result.add(Util.choose(e1) + Util.choose(e2));
         return result;
       },
       alt: function(r1,r2) {
-        var e1 = r1.examples(n); var e2 = r2.examples(n);
-        var result = new Set();
+        let e1 = r1.examples(n); let e2 = r2.examples(n);
+        let result = new Set();
         if (e1.length + e2.length <= n) {
-          for (var i in e1) result.add(e1[i]);
-          for (var i in e2) result.add(e2[i]);
+          for (let i in e1) result.add(e1[i]);
+          for (let i in e2) result.add(e2[i]);
         }
         else if (e1.length <= n/2) {
-          for (var i in e1) result.add(e1[i]);
-          for (var i = e1.length; i < n; i++) result.add(util.choose(e2));
+          for (let i in e1) result.add(e1[i]);
+          for (let i = e1.length; i < n; i++) result.add(Util.choose(e2));
         }
         else if (e2.length <= n/2) {
-          for (var i in e2) result.add(e2[i]);
-          for (var i = e2.length; i < n; i++) result.add(util.choose(e1));
+          for (let i in e2) result.add(e2[i]);
+          for (let i = e2.length; i < n; i++) result.add(Util.choose(e1));
         }
         else {
-          for (var i = 0; i < n/2; i++) result.add(util.choose(e1));
-          for (var i = n/2; i < n; i++) result.add(util.choose(e2));
+          for (let i = 0; i < n/2; i++) result.add(Util.choose(e1));
+          for (let i = n/2; i < n; i++) result.add(Util.choose(e2));
         }
         return result;
       },
       star: function(r) {
-        var e = r.examples(n);
-        var result = new Set();
+        let e = r.examples(n);
+        let result = new Set();
         if (e.length == 0) return [''];
-        for (var i = 0; i < n; i++) {
-          var s = '';
-          for (var j = 0; j < i; j++)
-            s += util.choose(e);
+        for (let i = 0; i < n; i++) {
+          let s = '';
+          for (let j = 0; j < i; j++)
+            s += Util.choose(e);
           result.add(s);
         }
         return result;
@@ -145,40 +137,16 @@ function make() {
     });
   }
 
-  /** Pretty printing *********************************************************/
+  /** Simple DOM tree *********************************************************/
 
-  this.parens = function parens(prec) {
-    return this.induct({
-      ε:   function() { return 'ε'; },
-      nil: function() { return '∅'; },
-      str: function(val) { switch(val) {
-                  case 'ε': case '∅': case '*': case '+': case '(': case ')':
-                            return '\\' + val;
-                  default:  return '' + val;
-                };
-         },
-      star: function(r) {
-        return prec < 1 ? '(' + r.parens(1) + '*)' : r.parens(1) + '*';
-      },
-      cat:  function(r1,r2) {
-        return prec < 2 ? '(' + r1.parens(2) + r2.parens(2) + ')' : r1.parens(2) + r2.parens(2);
-      },
-      alt:  function(r1,r2) {
-        return prec < 3 ? '(' + r1.parens(3) + '+' + r2.parens(3) + ')' : r1.parens(3) + '+' + r2.parens(3);
-      }
-    });
-  }
+  // TODO: extract this to UI
 
-  this.toString = function toString() {
-    return this.parens(5);
-  }
-
-  this.appendTo = function appendTo(dom) {
+  appendTo(dom) {
     function text(str) { dom.appendChild(document.createTextNode(str)); }
     function list(vals) {
-      var ul = document.createElement('ul');
-      for (var i in vals) {
-        var li = document.createElement('li');
+      let ul = document.createElement('ul');
+      for (let i in vals) {
+        let li = document.createElement('li');
         vals[i].appendTo(li);
         ul.appendChild(li);
       }
@@ -194,19 +162,50 @@ function make() {
       star: function(r)     { text('closure');       list([r]); }
     });
   }
-
-  return this;
 }
 
-/** Building REs **************************************************************/
+/** Concrete subclasses *******************************************************/
 
-function ε    ()      { return make.apply({type: 'ε'}); };
-function nil  ()      { return make.apply({type: '∅'}); };
-function str  (val)   { return make.apply({type: 'a', val: val}); };
-function cat  (r1,r2) { return make.apply({type: '~', r1: r1, r2: r2}); };
-function alt  (r1,r2) { return make.apply({type: '+', r1: r1, r2: r2}); };
-function star (r)     { return make.apply({type: '*', r: r}); };
+// See documentation at the top of the RE class.
 
+class ε    extends RE { induct(v,t)  { return (v.ε    || v._).call(t); } }
+class Nil  extends RE { induct(v,t)  { return (v.nil  || v._).call(t); } }
+class Str  extends RE { induct(v,t)  { return (v.str  || v._).call(t, this.val); }
+  constructor(val) { super(); this.val = val; }
+}
+class Cat  extends RE { induct(v,t)  { return (v.cat  || v._).call(t, this.r1, this.r2); }
+  constructor(r1,r2) { super(); this.r1 = r1; this.r2 = r2; }
+}
+class Alt  extends RE { induct(v,t)  { return (v.alt  || v._).call(t, this.r1, this.r2); }
+  constructor(r1,r2) { super(); this.r1 = r1; this.r2 = r2; }
+}
+class Star extends RE { induct(v,t)  { return (v.star || v._).call(target, this.r); }
+  constructor(r) { super(); this.r = r; }
+}
+
+/** Pretty printing *********************************************************/
+
+function parens(r,prec) {
+  return r.induct({
+    ε:   function() { return 'ε'; },
+    nil: function() { return '∅'; },
+    str: function(val) { switch(val) {
+		case 'ε': case '∅': case '*': case '+': case '(': case ')':
+			  return '\\' + val;
+		default:  return '' + val;
+	      };
+       },
+    star: function(r) {
+      return prec < 1 ? '(' + parens(r,1) + '*)' : parens(r,1) + '*';
+    },
+    cat:  function(r1,r2) {
+      return prec < 2 ? '(' + parens(r1,2) + parens(r2,2) + ')' : parens(r1,2) + parens(r2,2);
+    },
+    alt:  function(r1,r2) {
+      return prec < 3 ? '(' + parens(r1,3) + '+' + parens(r2,3) + ')' : parens(r1,3) + '+' + parens(r2,3);
+    }
+  });
+}
 
 /** Parsing REs ***************************************************************/
 
@@ -216,7 +215,7 @@ function star (r)     { return make.apply({type: '*', r: r}); };
  * 0 base   = ( expr ) | a | ε | ∅
  */
 
-function parse(str) {
+RE.parse = function parse(str) {
   class Tokens {
     constructor(s) {
       this.s = s;
@@ -236,36 +235,36 @@ function parse(str) {
   }
 
   function parseExpr(tok) {
-    var term = parseTerm(tok);
+    let term = parseTerm(tok);
 
     switch(tok.peek()) {
       case '+':
         tok.consume('+');
-        return {type: '+', r1: term, r2: parseExpr(tok)};
+        return RE.alt(term,parseExpr(tok));
       default:
         return term;
     }
   }
 
   function parseTerm(tok) {
-    var factor = parseFactor(tok);
+    let factor = parseFactor(tok);
 
     switch(tok.peek()) {
       case undefined:
       case ')':
       case '+':
       case '*': return factor;
-      default:  return {type: '~', r1: factor, r2: parseTerm(tok)};
+      default:  return RE.cat(factor, parseTerm(tok));
     }
   }
 
   function parseFactor(tok) {
-    var base = parseBase(tok);
+    let base = parseBase(tok);
 
     switch(tok.peek()) {
       case '*':
         tok.consume('*');
-        return {type: '*', r: base};
+        return RE.star(base);
       default:
         return base;
     }
@@ -275,15 +274,15 @@ function parse(str) {
     switch(tok.peek()) {
       case '(':
         tok.consume('(');
-        var expr = parseExpr(tok);
+        let expr = parseExpr(tok);
         tok.consume(')');
         return expr;
       case 'ε':
         tok.consume('ε');
-        return {type: 'ε'};
+        return RE.ε();
       case '∅':
         tok.consume('∅');
-        return {type: '∅'};
+        return RE.nil();
       case undefined:
       case ')':
       case '+':
@@ -294,22 +293,16 @@ function parse(str) {
         if (tok.peek() == undefined)
           throw 'illegal regular expression';
       default:
-        var result = tok.peek();
+        let result = tok.peek();
         tok.consume(result);
-        return {type: 'a', val: result};
+        return RE.str(result);
     }
   }
 
-  var tok = new Tokens(str);
-  var result = parseExpr(tok);
+  let tok = new Tokens(str);
+  let result = parseExpr(tok);
   if (tok.peek() != undefined)
     throw 'illegal regular expression';
-  return make.apply(result);
+  return result;
 }
-
-return {parse: parse,
-        nil: nil, ε: ε, str:str, cat: cat, alt: alt, star: star
-};
-
-});
 
