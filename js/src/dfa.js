@@ -1,5 +1,4 @@
-define(['induct'],
-function(induct) {
+import {induct} from './induct.js';
 
 /******************************************************************************/
 /** DFA ***********************************************************************/
@@ -8,26 +7,34 @@ function(induct) {
 /**
  * A DFA is an object with the following fields:
  *
- * Q: a finite set (stored as an array)
- * Σ: a finite set (stored as an array)
+ * Q: a finite set
+ * Σ: a finite set
  * δ: Q x Σ → Q
  * q0 ∈ Q
- * F  ⊆ Q          (stored as an array)
+ * A  ⊆ Q
  */
 
-function make() {
-  this.δhat = function δhat(q,x) {
+export default class DFA {
+  constructor(spec) {
+    this.Q  = new Set(spec.Q);
+    this.Σ  = new Set(spec.Σ);
+    this.δ  = spec.δ;
+    this.q0 = spec.q0;
+    this.A  = new Set(spec.A);
+    Object.freeze(this);
+  }
+
+  δhat(q,x) {
+    let m = this;
     return induct(x,{
-      ε:  q,
-      xa: function (x, a) { return this.δ(this.δhat(q,x), a); }
+      ε:  ()    => q,
+      xa: (x,a) => m.δ(m.δhat(q,x), a),
     });
-  };
+  }
 
-  this.accepts = function accepts(x) {
-    return this.F.includes(this.δhat(this.q0, x));
-  };
-
-  return this;
+  accepts(x) {
+    return this.A.includes(this.δhat(this.q0, x));
+  }
 }
 
 /** Examples ******************************************************************/
@@ -42,7 +49,7 @@ function make() {
  *        1
  */
 
-var even0odd1 = make.apply({
+export let even0odd1 = new DFA({
   Q: ['ee', 'eo', 'oe', 'oo'],
   Σ: ['0', '1'],
   δ: function(q,a) {
@@ -57,19 +64,14 @@ var even0odd1 = make.apply({
        throw 'invalid state';
      },
   q0: 'ee',
-  F: ['oe'],
+  A: ['oe'],
 });
 
-var allStrings = make.apply({
+export let allStrings = new DFA({
   Q: ['q'],
   Σ: ['a','b','c'],
   δ: function(q,a) { return 'q'; },
   q0: 'q',
-  F: ['q']
+  A: ['q']
 });
 
-/** Exports *******************************************************************/
-
-return {make: make, even0odd1: even0odd1, allStrings: allStrings};
-
-});

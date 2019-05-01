@@ -5,11 +5,8 @@
 /**
  * the induct function makes it easier to write inductively
  * defined functions on strings.  See examples below.
- */
-
-define([], function() {
-
-/**
+ *
+ *
  * examples:
  */
 
@@ -29,12 +26,10 @@ function cat(s1, s2) {
 
 /** defintion of induct *******************************************************/
 
-return function induct(s, f) {
+export function induct(s, f) {
   if (s == '')
     return f.ε;
   else
     return f.xa(induct(s.slice(0,-1), f), s.charAt(-1));
 }
-
-});
 

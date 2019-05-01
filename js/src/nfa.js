@@ -1,5 +1,3 @@
-define(['util', 'induct'],
-function(util,   induct) {
 
 /******************************************************************************/
 /** NFA ***********************************************************************/
@@ -8,13 +6,12 @@ function(util,   induct) {
 /**
  * An NFA is an object with the following fields:
  *
- * Q: a finite set (with methods contains and forEach)
- * Σ: a finite set (with methods contains and forEach)
- * δ: Q x Σ → set of states
+ * Q: a Set
+ * Σ: a Set
+ * δ: Q x Σ → Set of states
  * q0 ∈ Q
- * A  ⊆ Q          (with methods contains and forEach)
+ * A  ⊆ Q
  */
-
 function make() {
 
   this.δhat = function δhat(q, x) {

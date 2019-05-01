@@ -1,6 +1,4 @@
-
-define(['lib/d3'],
-function(d3) {
+import * as d3 from 'https://unpkg.com/d3@5.9.2/index.js?module';
 
 // create table:
 //   add thead, tr, state/q0/f/add char
@@ -11,13 +9,13 @@ function(d3) {
 //     update: 
 //   add rows
 
-return function render(table, dfa) {
+export default function render(table, dfa) {
 
-var thead = table.selectAll('thead').data([dfa]);
+let thead = table.selectAll('thead').data([dfa]);
 
 /** First-time setup **********************************************************/
 
-var header = thead.enter().append('thead').append('tr');
+let header = thead.enter().append('thead').append('tr');
 
 header.append("th").text("state");
 header.append("th").text("q0");
@@ -29,9 +27,9 @@ header.append('th').append('input')
   .attr('value', 'add character')
 ;
 
-var tbody = table.selectAll('tbody').data([dfa]);
+let tbody = table.selectAll('tbody').data([dfa]);
 
-var footer = tbody.enter().append('tbody').append('tr').append('th')
+let footer = tbody.enter().append('tbody').append('tr').append('th')
   .attr('colspan','3')
   .attr('class','border')
   .append('input')
@@ -42,10 +40,10 @@ var footer = tbody.enter().append('tbody').append('tr').append('th')
 
 /** Alphabet ******************************************************************/
 
-var chars  = table.select('thead tr').selectAll("th.char").data(dfa.Σ);
-var exit   = chars.exit().remove();
+let chars  = table.select('thead tr').selectAll("th.char").data(dfa.Σ);
+let exit   = chars.exit().remove();
 
-var enter  = chars.enter().insert('th','th:last-child')
+let enter  = chars.enter().insert('th','th:last-child')
  .attr('class', 'char')
 ;
 
@@ -68,14 +66,14 @@ enter.merge(chars).select('input.x')
 
 /******************************************************************************/
 
-var states = table.select('tbody').selectAll('tr.state').data(dfa.Q);
-var exit   = states.exit().remove();
+let states = table.select('tbody').selectAll('tr.state').data(dfa.Q);
+exit   = states.exit().remove();
 
-var enter = states.enter().insert('tr','tr:last-child')
+enter = states.enter().insert('tr','tr:last-child')
   .attr('class','state')
 ;
 
-var state = enter.append('th');
+let state = enter.append('th');
 
 state.append('input')
   .attr('class','x')
@@ -104,9 +102,9 @@ enter.append('th').attr('class','border').append('input')
 
 /** Transitions ***************************************************************/
 
-var update = enter.merge(states);
+let update = enter.merge(states);
 
-var cells = update.selectAll('td').data(dfa.Σ);
+let cells = update.selectAll('td').data(dfa.Σ);
 cells.exit().remove();
 cells.enter().append('td').append('input')
   .attr('class', 'state')
@@ -115,4 +113,3 @@ cells.enter().append('td').append('input')
 
 };
 
-});
