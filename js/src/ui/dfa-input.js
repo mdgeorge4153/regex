@@ -43,7 +43,7 @@ let footer = tbody.enter().append('tbody').append('tr').append('th')
 let chars  = table.select('thead tr').selectAll("th.char").data([...dfa.Σ]);
 let exit   = chars.exit().remove();
 
-let enter  = chars.enter().append('th')//insert('th','th:last-child')
+let enter  = chars.enter().insert('th','th:last-child')
  .attr('class', 'char')
 ;
 
@@ -97,7 +97,7 @@ enter.append('th').append('input')
 enter.append('th').attr('class','border').append('input')
   .attr('type','checkbox')
   .attr('name',function(d,i) { return 'q' + i + 'f'; })
-  .attr('checked', function(d) { return dfa.A.has(d) ? 'checked' : null; })
+  .attr('checked', function(d) { return dfa.A.contains(d) ? 'checked' : null; })
 ;
 
 /** Transitions ***************************************************************/
