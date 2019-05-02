@@ -1,3 +1,5 @@
+import {induct} from './induct.js';
+import FiniteSet from './finiteSet.js';
 
 /******************************************************************************/
 /** NFA ***********************************************************************/
@@ -6,32 +8,35 @@
 /**
  * An NFA is an object with the following fields:
  *
- * Q: a Set
- * Σ: a Set
- * δ: Q x Σ → Set of states
+ * Q: a FiniteSet
+ * Σ: a FiniteSet
+ * δ: Q x Σ → FiniteSet of states
  * q0 ∈ Q
  * A  ⊆ Q
  */
-function make() {
 
-  this.δhat = function δhat(q, x) {
+export default class NFA {
+
+  constructor(spec) {
+    this.Q  = spec.Q;
+    this.Σ  = spec.Σ;
+    this.δ  = spec.δ;
+    this.q0 = spec.q0;
+    this.A  = spec.A;
+    Object.freeze(this);
+  }
+
+  δhat(q, x) {
+    let m = this;
     return induct(x, {
-      ε:  new Set([q]),
-      xa: function(x, a) {
-	var result = new Set();
-	this.δhat(q,x).forEach(function (qq) { result.union(this.δ(qq,a)); });
-	return result;
-      }
+      ε:  new Set([q],this.Q.equality),
+      xa: (x,a) => m.δhat(q,x).bigUnion(qx => m.δ(qx,a))
     });
   }
 
-  this.accepts = function accepts(x) {
-    var copy_of_final = new Set(this.A);
-    copy_of_final.intersect(this.δhat(this.q0, x));
-    return !copy_of_final.isEmpty();
+  accepts(x) {
+    return !this.δhat(this.q0,x).intersect(this.A).isEmpty();
   }
-
-  return this;
 }
 
 /** Examples: *****************************************************************/
@@ -43,9 +48,9 @@ function make() {
  *    └─ b ─> q2 <──a────┘
  */
 
-var example = make.apply({
-  Q: new Set(['q0', 'q1', 'q2', 'q3']),
-  Σ: new Set(['a', 'b']),
+export let example = new NFA({
+  Q: new FiniteSet(['q0', 'q1', 'q2', 'q3'], FiniteSet.primitive),
+  Σ: new FiniteSet(['a', 'b'], FiniteSet.primitive),
   δ: function(q,a) {
        if(q == 'q0' && a=='a') return new Set(['q1']);
        if(q == 'q0' && a=='b') return new Set(['q2']);
@@ -58,10 +63,6 @@ var example = make.apply({
        throw 'invalid state';
      },
   q0: 'q0',
-  A:  new Set(['q1', 'q3'])
+  A:  new FiniteSet(['q1', 'q3'], FiniteSet.primitive)
 });
 
-
-return {make: make, example: example};
-
-});

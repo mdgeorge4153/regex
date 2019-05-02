@@ -103,16 +103,18 @@ export function binaryDivBy(m) {
  * accept([q1,q2]) should return true if [q1,q2] is an accepting state
  */
 function dfa_cross(m1, m2, shouldAccept) {
-  let Q = m1.Q.cross(m2.Q);
   if (!m1.Σ.equals(m2.Σ))
     throw 'alphabets must be equal to combine DFAs';
+
+  let Q = m1.Q.cross(m2.Q);
+  let A = Q.suchThat(shouldAccept);
 
   return new DFA({
     Q:  Q,
     Σ:  m1.Σ,
     δ:  ([q1,q2],a) => [m1.δ(q1,a), m2.δ(q2,a)],
     q0: [m1.q0, m2.q0],
-    A:  Q.suchThat(shouldAccept)
+    A:  A
   });
 }
 
@@ -148,8 +150,9 @@ export function complement(m) {
 /** NFA to DFA conversion *****************************************************/
 
 export function ofNFA(n) {
+  let Q = n.Q.powerSet();
   return new DFA({
-    Q:  n.Q.powerFiniteSet(),
+    Q:  Q,
     Σ:  n.Σ,
     δ:  (s, a) => s.bigUnion(qn => n.δ(qn)),
     q0: new FiniteSet(n.q0, n.Q.equality),
