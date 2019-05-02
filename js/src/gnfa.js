@@ -1,6 +1,6 @@
 import induct from './induct.js';
 import re     from './re.js';
-import util   from './util.js';
+import * as Util from './util.js';
 
 /**
  * A Generalized NFA is an object with the following fields:
@@ -64,7 +64,7 @@ export class GNFA {
 
       // remove the state, replacing the transitions through the 
       return make.apply({
-	Q: util.remove(me.Q, removed),
+	Q: Util.remove(me.Q, removed),
 	Σ: me.Σ,
 	δ: function(q1, q2) {
 	  let old  = me.δ(q1,q2);
@@ -97,7 +97,7 @@ function ofNFA(nfa) {
   let end   = new Symbol('accept');
 
   return make.apply({
-    Q: util.union(nfa.Q, [start,end]),
+    Q: Util.union(nfa.Q, [start,end]),
     Σ: nfa.Σ,
     δ: function δ(q1,q2) {
       let result = re.nil();

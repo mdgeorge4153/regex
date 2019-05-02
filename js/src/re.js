@@ -1,4 +1,4 @@
-import Util from './util.js';
+import * as Util from './util.js';
 
 export default class RE {
   /** Induction ***************************************************************/
