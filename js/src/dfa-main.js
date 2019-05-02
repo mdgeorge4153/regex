@@ -1,8 +1,8 @@
 import render  from './ui/dfa-input.js';
-import DFA     from './dfa.js';
-import * as d3 from 'https://unpkg.com/d3@5.9.2/index.js?module';
+import {DFA,even0odd1} from './dfa.js';
+import * as d3 from 'd3';
 
-var table = d3.select('table#dfa');
+let table = d3.select('table#dfa');
 
-render(table, DFA.even0odd1);
+render(table, even0odd1);
 

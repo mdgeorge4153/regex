@@ -1,4 +1,4 @@
-import * as d3 from 'https://unpkg.com/d3@5.9.2/index.js?module';
+import * as d3 from 'd3';
 
 // create table:
 //   add thead, tr, state/q0/f/add char
@@ -40,10 +40,10 @@ let footer = tbody.enter().append('tbody').append('tr').append('th')
 
 /** Alphabet ******************************************************************/
 
-let chars  = table.select('thead tr').selectAll("th.char").data(dfa.Σ);
+let chars  = table.select('thead tr').selectAll("th.char").data([...dfa.Σ]);
 let exit   = chars.exit().remove();
 
-let enter  = chars.enter().insert('th','th:last-child')
+let enter  = chars.enter().append('th')//insert('th','th:last-child')
  .attr('class', 'char')
 ;
 
@@ -66,7 +66,7 @@ enter.merge(chars).select('input.x')
 
 /******************************************************************************/
 
-let states = table.select('tbody').selectAll('tr.state').data(dfa.Q);
+let states = table.select('tbody').selectAll('tr.state').data([...dfa.Q]);
 exit   = states.exit().remove();
 
 enter = states.enter().insert('tr','tr:last-child')
@@ -97,14 +97,14 @@ enter.append('th').append('input')
 enter.append('th').attr('class','border').append('input')
   .attr('type','checkbox')
   .attr('name',function(d,i) { return 'q' + i + 'f'; })
-  .attr('checked', function(d) { return dfa.F.includes(d) ? 'checked' : null; })
+  .attr('checked', function(d) { return dfa.A.has(d) ? 'checked' : null; })
 ;
 
 /** Transitions ***************************************************************/
 
 let update = enter.merge(states);
 
-let cells = update.selectAll('td').data(dfa.Σ);
+let cells = update.selectAll('td').data([...dfa.Σ]);
 cells.exit().remove();
 cells.enter().append('td').append('input')
   .attr('class', 'state')
