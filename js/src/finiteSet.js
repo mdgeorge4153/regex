@@ -85,7 +85,7 @@ export default class FiniteSet {
   static symmetricDifference(s1,s2) { return s1.differences(s2); }
 
   contains(x) {
-    return this._value.find(y => this.equality(x,y));
+    return (this._value.find(y => this.equality(x,y)) != undefined);
   }
 
   powerSet() {
