@@ -155,7 +155,7 @@ export function ofNFA(n) {
     Q:  Q,
     Σ:  n.Σ,
     δ:  (s, a) => s.bigUnion(qn => n.δ(qn,a)),
-    q0: new FiniteSet(n.q0, n.Q.equality),
+    q0: new FiniteSet([n.q0], n.Q.equality),
     A:  Q.suchThat(s => !s.intersect(n.A).isEmpty())
   });
 }
@@ -191,7 +191,26 @@ export function simplify(m) {
 
 /** Remove unreachable states */
 export function removeUnreachable(m) {
-  throw 'Not implemented';
+  let seen = new FiniteSet([], m.Q.equality);
+
+  function depthFirstSearch(q) {
+    if (seen.contains(q))
+      return seen;
+
+    seen = seen.union(new FiniteSet([q], m.Q.equality));
+    for (let a of m.Σ)
+      depthFirstSearch(m.δ(q,a));
+  }
+
+  depthFirstSearch(m.q0);
+
+  return new DFA({
+    Q: seen,
+    Σ: m.Σ,
+    δ: m.δ,
+    q0: m.q0,
+    A: m.A.intersect(seen)
+  });
 }
 
 

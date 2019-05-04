@@ -60,7 +60,7 @@ export let example = new NFA({
        if(q == 'q2' && a=='b') return new FiniteSet([],           FiniteSet.primitive);
        if(q == 'q3' && a=='a') return new FiniteSet(['q3', 'q2'], FiniteSet.primitive);
        if(q == 'q3' && a=='b') return new FiniteSet(['q1'],       FiniteSet.primitive);
-       throw 'invalid state';
+       throw 'foo';
      },
   q0: 'q0',
   A:  new FiniteSet(['q1', 'q3'], FiniteSet.primitive)
