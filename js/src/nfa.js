@@ -52,14 +52,14 @@ export let example = new NFA({
   Q: new FiniteSet(['q0', 'q1', 'q2', 'q3'], FiniteSet.primitive),
   Σ: new FiniteSet(['a', 'b'], FiniteSet.primitive),
   δ: function(q,a) {
-       if(q == 'q0' && a=='a') return new Set(['q1']);
-       if(q == 'q0' && a=='b') return new Set(['q2']);
-       if(q == 'q1' && a=='a') return new Set([]);
-       if(q == 'q1' && a=='b') return new Set(['q3']);
-       if(q == 'q2' && a=='a') return new Set(['q1']);
-       if(q == 'q2' && a=='b') return new Set([]);
-       if(q == 'q3' && a=='a') return new Set(['q3', 'q2']);
-       if(q == 'q3' && a=='b') return new Set(['q1']);
+       if(q == 'q0' && a=='a') return new FiniteSet(['q1'],       FiniteSet.primitive);
+       if(q == 'q0' && a=='b') return new FiniteSet(['q2'],       FiniteSet.primitive);
+       if(q == 'q1' && a=='a') return new FiniteSet([],           FiniteSet.primitive);
+       if(q == 'q1' && a=='b') return new FiniteSet(['q3'],       FiniteSet.primitive);
+       if(q == 'q2' && a=='a') return new FiniteSet(['q1'],       FiniteSet.primitive);
+       if(q == 'q2' && a=='b') return new FiniteSet([],           FiniteSet.primitive);
+       if(q == 'q3' && a=='a') return new FiniteSet(['q3', 'q2'], FiniteSet.primitive);
+       if(q == 'q3' && a=='b') return new FiniteSet(['q1'],       FiniteSet.primitive);
        throw 'invalid state';
      },
   q0: 'q0',

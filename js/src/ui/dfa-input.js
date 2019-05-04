@@ -108,7 +108,7 @@ let cells = update.selectAll('td').data([...dfa.Σ]);
 cells.exit().remove();
 cells.enter().append('td').append('input')
   .attr('class', 'state')
-  .attr('value', function(d,i) { return dfa.δ(d3.select(this.parentNode.parentNode).datum(), d); })
+  .attr('value', function(d,i) { return dfa.δ(d3.select(this.parentNode.parentNode).datum(), d).toString(); })
 ;
 
 };

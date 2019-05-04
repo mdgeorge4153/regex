@@ -154,7 +154,7 @@ export function ofNFA(n) {
   return new DFA({
     Q:  Q,
     Σ:  n.Σ,
-    δ:  (s, a) => s.bigUnion(qn => n.δ(qn)),
+    δ:  (s, a) => s.bigUnion(qn => n.δ(qn,a)),
     q0: new FiniteSet(n.q0, n.Q.equality),
     A:  Q.suchThat(s => !s.intersect(n.A).isEmpty())
   });
