@@ -113,5 +113,14 @@ export default class FiniteSet {
     return this._value[0];
   }
 
+  /** Give the set of values reachable from [this] by repeated applications of f. */
+  transitiveClosure(f) {
+    let next = this.bigUnion(f);
+
+    if (this.equals(next))
+      return this;
+
+    return next.transitiveClosure(f);
+  }
 }
 

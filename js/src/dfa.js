@@ -191,18 +191,8 @@ export function simplify(m) {
 
 /** Remove unreachable states */
 export function removeUnreachable(m) {
-  let seen = new FiniteSet([], m.Q.equality);
-
-  function depthFirstSearch(q) {
-    if (seen.contains(q))
-      return seen;
-
-    seen = seen.union(new FiniteSet([q], m.Q.equality));
-    for (let a of m.Σ)
-      depthFirstSearch(m.δ(q,a));
-  }
-
-  depthFirstSearch(m.q0);
+  let seen = new FiniteSet([m.q0], m.Q.equality)
+       .transitiveClosure(q => m.Σ.bigUnion(a => new FiniteSet([m.δ(q,a)],m.Q.equality)));
 
   return new DFA({
     Q: seen,
