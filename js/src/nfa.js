@@ -29,7 +29,7 @@ export default class NFA {
   δhat(q, x) {
     let m = this;
     return induct(x, {
-      ε:  new Set([q],this.Q.equality),
+      ε:  new FiniteSet([q],this.Q.equality),
       xa: (x,a) => m.δhat(q,x).bigUnion(qx => m.δ(qx,a))
     });
   }
@@ -65,4 +65,16 @@ export let example = new NFA({
   q0: 'q0',
   A:  new FiniteSet(['q1', 'q3'], FiniteSet.primitive)
 });
+
+/** from DFA ******************************************************************/
+
+export function ofDFA(m) {
+  return new NFA({
+    Q:  m.Q,
+    Σ:  m.Σ,
+    δ:  (q,a) => new FiniteSet(m.δ(q,a), m.Q.equality),
+    q0: m.q0,
+    A:  m.A
+  });
+}
 
