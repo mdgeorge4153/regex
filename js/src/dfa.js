@@ -90,7 +90,7 @@ export function binaryDivBy(m) {
     Σ: new FiniteSet([0,1], FiniteSet.primitive),
     δ: (q,a) => (2*q + a) % m,
     q0: 0,
-    A:  new FiniteSet(0, FiniteSet.primitive)
+    A:  new FiniteSet([0], FiniteSet.primitive)
   });
 }
 
@@ -164,7 +164,7 @@ export function ofNFA(n) {
 
 export function ofεNFA(n) {
   return new DFA({
-    Q:  n.Q.powerFiniteSet().map(n.εclose, FiniteSet.equals),
+    Q:  n.Q.powerSet().map(n.εclose, FiniteSet.equals),
     Σ:  n.Σ,
     δ:  (s, a) => s.bigUnion(q => n.δhat(q,a)),
     q0: n.εclose(new FiniteSet(n.q0, n.Q.equality)),
